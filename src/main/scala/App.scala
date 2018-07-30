@@ -3,8 +3,9 @@ import org.apache.spark.{SparkConf, SparkContext}
 import scala.util.parsing.json.JSON
 
 
-
-
+/**
+  * spark使用demo
+  */
 object App {
   def main(args: Array[String]): Unit = {
     val logFile = "file:///Users/hewe/Soft/spark/README.md"
@@ -12,7 +13,9 @@ object App {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local")
     val sc = new SparkContext(conf)
 
-    jsonReader(sc,jsonFile)
+
+    flatMapTest(sc)
+    //jsonReader(sc,jsonFile)
     //keyPair(sc, logFile)
     //calSpecialWordCount(sc,logFile)
     //calWordCount(sc,logFile);
@@ -23,16 +26,26 @@ object App {
   def jsonReader(sc: SparkContext, filePath: String): Unit = {
 
     val jsonData = sc.textFile(filePath)
-    jsonData.map(s => JSON.parseFull(s)).foreach(f => f  match {
+    jsonData.map(s => JSON.parseFull(s)).foreach(f => f match {
       case Some(map: Map[String, Any]) => println(map)
       case None => println("Parsing failed")
-      case other => println("unkown: ",other)
+      case other => println("unkown: ", other)
     })
 
   }
 
+  def flatMapTest(sc: SparkContext): Unit = {
+    val rdd = sc.parallelize(Array(13, 34, 36))
+    val prdd = rdd.map(x => (x / 10, x % 10))
+    val grdd = prdd.groupByKey()
+    grdd.mapValues(x => {
+      Array(2, 3, 4)
+    }).flatMapValues(x => x).foreach(println)
+  }
+
   /**
     * 键值对
+    *
     * @param sc
     * @param filePath
     */
@@ -40,11 +53,13 @@ object App {
     val lines = sc.textFile(filePath)
     val pairs = lines.flatMap(line => line.split(" ")) //
       .map(word => (word, 1))
-    pairs.reduceByKey((a,b) => a+b).foreach(f => println("data: ",f))
+
+    pairs.reduceByKey((a, b) => a + b).foreach(f => println("data: ", f))
   }
 
   /**
     * 计算指定的单词数量
+    *
     * @param sc
     * @param filePath
     */
